@@ -2,6 +2,8 @@
 {
     public class Travel
     {
+        private Travel() { }
+
         public Travel(int userId, string name)
         {
             UserId = userId;
@@ -17,5 +19,12 @@
         public DateTime CreatedAt { get; private set; }
         public DateTime? CompletedAt { get; private set; }
         public ICollection<Destination> Destinations { get; private set; }
+
+        public Destination AddDestination(string name, decimal lat, decimal lang)
+        {
+            var destination = new Destination(Id, name, lat, lang);
+            Destinations.Add(destination);
+            return destination;
+        }
     }
 }

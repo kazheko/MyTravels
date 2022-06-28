@@ -23,5 +23,10 @@ namespace MyTravels.Persistence
         //{
         //    optionsBuilder.UseNpgsql("Host=localhost;Port=5433;Database=usersdb;Username=postgres;Password=здесь_указывается_пароль_от_postgres");
         //}
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.SeedData();
+        }
     }
 }

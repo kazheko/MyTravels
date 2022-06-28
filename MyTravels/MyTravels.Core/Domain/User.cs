@@ -2,6 +2,8 @@
 {
     public class User
     {
+        private User() { }
+
         public User(string name)
         {
             Name = name;
@@ -13,6 +15,13 @@
         public string Name { get; private set; }
         public DateTime CreatedAt { get; private set; }
         public ICollection<Travel> Travels { get; private set; }
+
+        public Travel PlaneTravel(string name)
+        {
+            var travel = new Travel(Id, name);
+            Travels.Add(travel);
+            return travel;
+        }
 
     }
 }

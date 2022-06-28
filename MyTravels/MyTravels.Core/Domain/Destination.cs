@@ -2,6 +2,8 @@
 {
     public class Destination
     {
+        private Destination() { }
+
         public Destination(int travelId, string name, decimal lat, decimal lang)
         {
             TravelId = travelId;
@@ -19,5 +21,11 @@
         public decimal Lang { get; private set; }
         public DateTime CreatedAt { get; private set; }
         public ICollection<Note> Notes { get; private set; }
+
+        public void AddNote(string text)
+        {
+            var note = new Note(Id, text);
+            Notes.Add(note);
+        }
     }
 }

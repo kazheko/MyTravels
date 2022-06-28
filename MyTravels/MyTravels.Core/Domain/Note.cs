@@ -2,6 +2,8 @@
 {
     public class Note
     {
+        private Note() { }
+
         public Note(int destinationId, string description)
         {
             DestinationId = destinationId;
