@@ -1,16 +1,19 @@
-using Microsoft.AspNetCore.Mvc;
 using MyTravels.Persistence;
+using MyTravels.WebApi.GraphQL;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDbContext<ApplicationContext>(x =>
+builder.Services.AddPooledDbContextFactory<ApplicationContext>(x =>
     x.UseNpgsqlProvider(builder.Configuration.GetConnectionString("GeneralConection")));
+
+builder.Services.AddGraphQLServer()
+    .AddQueryType<Query>()
+    .AddProjections()
+    .AddFiltering()
+    .AddSorting();
 
 var app = builder.Build();
 
-app.MapGet("/", ([FromServices]ApplicationContext ctx) => {
-    var result = ctx.Destinations.ToList();
-    return "Hello World!"; 
-});
+app.MapGraphQL();
 
 app.Run();
