@@ -13,6 +13,10 @@ provider "aws" {
   region = "us-east-2"
 }
 
+locals {
+  env = "stage"
+}
+
 resource "aws_launch_configuration" "vm1" {
   image_id = "ami-02f3416038bdb17fb"
   instance_type = "t2.micro"
@@ -20,7 +24,7 @@ resource "aws_launch_configuration" "vm1" {
   user_data = data.template_file.user_data.rendered
   lifecycle {
     create_before_destroy = true
-  }          
+  }
 }
 
 resource "aws_security_group" "web_sg" {
@@ -122,7 +126,6 @@ resource "aws_lb_target_group" "tg1" {
     healthy_threshold = 2
     unhealthy_threshold = 2
   }
-
 }
 
 data "terraform_remote_state" "db" {
@@ -142,6 +145,10 @@ data "template_file" "user_data" {
     server_port = var.web_port
     db_address = data.terraform_remote_state.db.outputs.address
     db_port = data.terraform_remote_state.db.outputs.port
+    db_username = var.db_username
+    db_password = var.db_password
+    db_database = var.db_database
+    env = local.env
   }
 }
 

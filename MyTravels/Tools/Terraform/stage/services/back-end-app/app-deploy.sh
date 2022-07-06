@@ -31,6 +31,12 @@ git clone https://github.com/kazheko/MyTravels.git
 
 sudo dotnet publish MyTravels/MyTravels -o publish -c release
 
+echo "{
+  \"ConnectionStrings\": {
+    \"DefaultConnection\": \"Host=${db_address};Port=${db_port};Database=${db_database};Username=${db_username};Password=${db_password}\"
+  }
+}" | appsettings.${env}.json > /dev/null
+
 echo "[Unit] 
 Description=My Travels
 
@@ -40,7 +46,7 @@ ExecStart=/usr/bin/dotnet /home/ubuntu/publish/MyTravels.WebApi.dll
 Restart=always 
 RestartSec=10 # Restart service after 10 seconds if dotnet service crashes 
 SyslogIdentifier=offershare-web-app
-Environment=ASPNETCORE_ENVIRONMENT=Production 
+Environment=ASPNETCORE_ENVIRONMENT=${env} 
 
 [Install] 
 WantedBy=multi-user.target" | sudo tee /etc/systemd/system/my-travels-web-api.service > /dev/null
