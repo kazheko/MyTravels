@@ -1,16 +1,15 @@
 using MyTravels.Persistence;
-using MyTravels.WebApi.GraphQL;
+using MyTravels.WebApi.Configurations;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddPooledDbContextFactory<ApplicationContext>(x =>
-    x.UseNpgsqlProvider(builder.Configuration.GetConnectionString("GeneralConection")));
+builder.Logging.ClearProviders();
+builder.Logging.AddSerilogLogging();
 
-builder.Services.AddGraphQLServer()
-    .AddQueryType<Query>()
-    .AddProjections()
-    .AddFiltering()
-    .AddSorting();
+builder.Services.AddPooledDbContextFactory<ApplicationContext>(x =>
+    x.UseNpgsqlProvider(builder.Configuration.GetDefaultConnection()));
+
+builder.Services.AddGraphQL();
 
 var app = builder.Build();
 
