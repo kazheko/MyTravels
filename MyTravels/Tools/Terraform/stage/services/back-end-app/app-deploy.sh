@@ -19,8 +19,6 @@ echo "server {
     proxy_set_header Connection keep-alive;
     proxy_set_header Host \$host;
     proxy_cache_bypass \$http_upgrade;
-    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto \$scheme;
  }
 }" | sudo tee /etc/nginx/sites-available/default > /dev/null
 
@@ -35,13 +33,13 @@ echo "{
   \"ConnectionStrings\": {
     \"DefaultConnection\": \"Host=${db_address};Port=${db_port};Database=${db_database};Username=${db_username};Password=${db_password}\"
   }
-}" | appsettings.${env}.json > /dev/null
+}" | sudo tee ./publish/appsettings.${env}.json > /dev/null
 
 echo "[Unit] 
 Description=My Travels
 
 [Service] 
-WorkingDirectory=/home/ubuntu/MyTravels/MyTravels 
+WorkingDirectory=/home/ubuntu/publish 
 ExecStart=/usr/bin/dotnet /home/ubuntu/publish/MyTravels.WebApi.dll 
 Restart=always 
 RestartSec=10 # Restart service after 10 seconds if dotnet service crashes 
