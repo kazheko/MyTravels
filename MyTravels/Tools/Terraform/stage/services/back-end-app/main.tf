@@ -14,7 +14,7 @@ provider "aws" {
 }
 
 locals {
-  env = "stage"
+  env = "Stage"
 }
 
 resource "aws_launch_configuration" "vm1" {
@@ -29,11 +29,19 @@ resource "aws_launch_configuration" "vm1" {
 
 resource "aws_security_group" "web_sg" {
   name = "web_sg"
+  
   ingress {
     cidr_blocks = [ "0.0.0.0/0" ]
     from_port = var.web_port
     protocol = "tcp"
     to_port = var.web_port
+  }
+
+  egress {
+    from_port = 0
+    to_port = 0
+    protocol = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 }
 
