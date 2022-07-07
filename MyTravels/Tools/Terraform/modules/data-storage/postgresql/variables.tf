@@ -3,3 +3,8 @@ variable "db_username" {
  type = string
  default = "postgres"
 }
+
+variable "env_name" {
+  description = "The name to use for all the environment resources"
+  type = string
+}
