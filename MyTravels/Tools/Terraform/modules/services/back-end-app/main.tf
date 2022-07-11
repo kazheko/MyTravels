@@ -8,7 +8,7 @@ locals {
 }
 
 resource "aws_launch_configuration" "vm" {
-  name_prefix = "${var.env_name}_vm_"
+  name_prefix = "${var.env_name}_"
   image_id = "ami-02f3416038bdb17fb"
   instance_type = "t2.micro"
   security_groups = [aws_security_group.vm_sg.id]
@@ -39,7 +39,7 @@ resource "aws_security_group" "vm_sg" {
 }
 
 resource "aws_autoscaling_group" "main_asg" {
-  name = "${var.env_name}_asg"
+  name = "${aws_launch_configuration.vm.name}_asg"
   launch_configuration = aws_launch_configuration.vm.name
   vpc_zone_identifier  = data.aws_subnets.default.ids
 
@@ -47,6 +47,13 @@ resource "aws_autoscaling_group" "main_asg" {
   
   min_size = 2
   max_size = 10
+
+  min_elb_capacity = 2
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
 
   tag {
     key = "Name"
