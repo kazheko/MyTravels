@@ -13,6 +13,7 @@ resource "aws_launch_configuration" "vm" {
   instance_type = "t2.micro"
   security_groups = [aws_security_group.vm_sg.id]
   user_data = data.template_file.user_data.rendered
+
   lifecycle {
     create_before_destroy = true
   }
@@ -34,6 +35,7 @@ resource "aws_security_group" "vm_sg" {
     protocol = local.any_protocol
     cidr_blocks = local.all_ips
   }
+  
 }
 
 resource "aws_autoscaling_group" "main_asg" {
@@ -45,6 +47,7 @@ resource "aws_autoscaling_group" "main_asg" {
   
   min_size = 2
   max_size = 10
+
   tag {
     key = "Name"
     value = "asg_instance"
@@ -118,7 +121,7 @@ resource "aws_lb_target_group" "tg" {
   vpc_id = data.aws_vpc.default.id
 
   health_check {
-    path = "/"
+    path = "/health/live"
     protocol = local.http_protocol
     matcher = "200"
     interval = 15
@@ -126,6 +129,66 @@ resource "aws_lb_target_group" "tg" {
     healthy_threshold = 2
     unhealthy_threshold = 2
   }
+}
+
+# === scaling up ===
+
+resource "aws_cloudwatch_metric_alarm" "scale_up" {
+  alarm_name = "${var.env_name}_scaling_up"
+  alarm_description = "Monitors CPU utilization for main ASG"
+  
+  namespace = "AWS/EC2"
+
+  metric_name = "CPUUtilization"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  threshold = 70
+  statistic = "Average"
+  period = "120"
+  evaluation_periods = "2"
+
+  alarm_actions = [aws_autoscaling_policy.scale_up.arn]
+
+  dimensions = {
+    AutoScalingGroupName = aws_autoscaling_group.main_asg.name
+  }
+}
+
+resource "aws_autoscaling_policy" "scale_up" {
+  name = "${var.env_name}_scaling_up"
+  autoscaling_group_name = aws_autoscaling_group.main_asg.name
+  adjustment_type = "ChangeInCapacity"
+  scaling_adjustment = 1
+  cooldown = 120
+}
+
+# === scaling down ===
+
+resource "aws_cloudwatch_metric_alarm" "scale_down" {
+  alarm_name = "${var.env_name}_scaling_down"
+  alarm_description = "Monitors CPU utilization for main ASG"
+  
+  namespace = "AWS/EC2"
+
+  metric_name = "CPUUtilization"
+  comparison_operator = "LessThanOrEqualToThreshold"
+  threshold = 10
+  statistic = "Average"
+  period = "120"
+  evaluation_periods = "2"
+
+  alarm_actions = [aws_autoscaling_policy.scale_down.arn]
+
+  dimensions = {
+    AutoScalingGroupName = aws_autoscaling_group.main_asg.name
+  }
+}
+
+resource "aws_autoscaling_policy" "scale_down" {
+  name = "${var.env_name}_scaling_down"
+  autoscaling_group_name = aws_autoscaling_group.main_asg.name
+  adjustment_type = "ChangeInCapacity"
+  scaling_adjustment = -1
+  cooldown = 120
 }
 
 data "terraform_remote_state" "db" {
