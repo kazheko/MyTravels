@@ -134,6 +134,8 @@ resource "aws_lb_target_group" "tg" {
 # === scaling up ===
 
 resource "aws_cloudwatch_metric_alarm" "scale_up" {
+  count = var.enable_autoscaling ? 1 : 0
+
   alarm_name = "${var.env_name}_scaling_up"
   alarm_description = "Monitors CPU utilization for main ASG"
   
@@ -146,7 +148,7 @@ resource "aws_cloudwatch_metric_alarm" "scale_up" {
   period = "120"
   evaluation_periods = "2"
 
-  alarm_actions = [aws_autoscaling_policy.scale_up.arn]
+  alarm_actions = [aws_autoscaling_policy.scale_up[0].arn]
 
   dimensions = {
     AutoScalingGroupName = aws_autoscaling_group.main_asg.name
@@ -154,6 +156,8 @@ resource "aws_cloudwatch_metric_alarm" "scale_up" {
 }
 
 resource "aws_autoscaling_policy" "scale_up" {
+  count = var.enable_autoscaling ? 1 : 0
+
   name = "${var.env_name}_scaling_up"
   autoscaling_group_name = aws_autoscaling_group.main_asg.name
   adjustment_type = "ChangeInCapacity"
@@ -164,6 +168,8 @@ resource "aws_autoscaling_policy" "scale_up" {
 # === scaling down ===
 
 resource "aws_cloudwatch_metric_alarm" "scale_down" {
+  count = var.enable_autoscaling ? 1 : 0
+
   alarm_name = "${var.env_name}_scaling_down"
   alarm_description = "Monitors CPU utilization for main ASG"
   
@@ -176,7 +182,7 @@ resource "aws_cloudwatch_metric_alarm" "scale_down" {
   period = "120"
   evaluation_periods = "2"
 
-  alarm_actions = [aws_autoscaling_policy.scale_down.arn]
+  alarm_actions = [aws_autoscaling_policy.scale_down[0].arn]
 
   dimensions = {
     AutoScalingGroupName = aws_autoscaling_group.main_asg.name
@@ -184,6 +190,8 @@ resource "aws_cloudwatch_metric_alarm" "scale_down" {
 }
 
 resource "aws_autoscaling_policy" "scale_down" {
+  count = var.enable_autoscaling ? 1 : 0
+ 
   name = "${var.env_name}_scaling_down"
   autoscaling_group_name = aws_autoscaling_group.main_asg.name
   adjustment_type = "ChangeInCapacity"

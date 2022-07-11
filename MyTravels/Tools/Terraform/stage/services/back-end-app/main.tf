@@ -19,5 +19,6 @@ module "back_end" {
   db_password = var.db_password
   db_remote_state_bucket = "web-app-terraform-state"
   db_remote_state_key = "stage/data-storage/postgresql/terraform.tfstate"
-  env_name = "stage"  
+  env_name = "stage"
+  enable_autoscaling = false
 }

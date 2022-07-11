@@ -20,4 +20,5 @@ module "back_end" {
   db_remote_state_bucket = "web-app-terraform-state"
   db_remote_state_key = "prod/data-storage/postgresql/terraform.tfstate"
   env_name = "prod"
+  enable_autoscaling = true
 }
