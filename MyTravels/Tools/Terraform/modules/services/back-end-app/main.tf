@@ -1,94 +1,28 @@
 locals {
-  all_ips = [ "0.0.0.0/0" ]
-  tcp_protocol = "tcp"
   http_protocol = "HTTP"
-  any_protocol = "-1"
-  any_port = 0
-  http_port = 80
 }
 
-resource "aws_launch_configuration" "vm" {
-  name_prefix = "${var.env_name}_"
-  image_id = "ami-02f3416038bdb17fb"
-  instance_type = "t2.micro"
-  security_groups = [aws_security_group.vm_sg.id]
-  user_data = data.template_file.user_data.rendered
+module "asg" {
+  source = "../../cluster/asg-rolling-deploy"
 
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-resource "aws_security_group" "vm_sg" {
-  name = "${var.env_name}_vm_sg"
-  
-  ingress {
-    cidr_blocks = local.all_ips
-    from_port = var.web_port
-    protocol = local.tcp_protocol
-    to_port = var.web_port
-  }
-
-  egress {
-    from_port = local.any_port
-    to_port = local.any_port
-    protocol = local.any_protocol
-    cidr_blocks = local.all_ips
-  }
-  
-}
-
-resource "aws_autoscaling_group" "main_asg" {
-  name = "${aws_launch_configuration.vm.name}_asg"
-  launch_configuration = aws_launch_configuration.vm.name
-  vpc_zone_identifier  = data.aws_subnets.default.ids
-
-  health_check_type = "ELB"
-  
-  min_size = 2
-  max_size = 10
-
-  min_elb_capacity = 2
-
-  lifecycle {
-    create_before_destroy = true
-  }
-
-
-  tag {
-    key = "Name"
-    value = "asg_instance"
-    propagate_at_launch = true
-  }
-
+  env_name = var.env_name
+  enable_autoscaling = var.enable_autoscaling
   target_group_arns = [aws_lb_target_group.tg.arn]
+  subnet_ids = data.aws_subnets.default.ids
+  health_check_type = "ELB"
+  user_data = data.template_file.user_data.rendered
+  server_port = var.web_port
 }
 
-resource "aws_lb" "lb" {
-  name = "${var.env_name}-lb"
-  load_balancer_type = "application"
-  subnets = data.aws_subnets.default.ids
-  security_groups = [aws_security_group.alb_sg.id]
-}
+module "alb" {
+  source = "../../networking/alb"
 
-resource "aws_alb_listener" "http_listener" {
-  load_balancer_arn = aws_lb.lb.arn
-  port = local.http_port
-  protocol = local.http_protocol
-
-  default_action {
-    type = "fixed-response"
-
-    fixed_response {
-      content_type = "text/plain"
-      message_body = "404: this page not found"
-      status_code = 404 
-    }
-  }
+  subnet_ids = data.aws_subnets.default.ids
+  env_name = var.env_name
 }
 
 resource "aws_lb_listener_rule" "http_istener_rule" {
-  listener_arn = aws_alb_listener.http_listener.arn
+  listener_arn = module.alb.alb_http_listener_arn
   priority = 100
   
   condition {
@@ -100,24 +34,6 @@ resource "aws_lb_listener_rule" "http_istener_rule" {
   action {
     type = "forward"
     target_group_arn = aws_lb_target_group.tg.arn
-  }
-}
-
-resource "aws_security_group" "alb_sg" {
-  name = "${var.env_name}_alb_sg"
-  
-  ingress {
-      from_port = local.http_port
-      to_port = local.http_port
-      protocol = local.tcp_protocol
-      cidr_blocks = local.all_ips
-  }
-
-  egress {
-      from_port = local.any_port
-      to_port = local.any_port
-      protocol = local.any_protocol
-      cidr_blocks = local.all_ips
   }
 }
 
@@ -136,74 +52,6 @@ resource "aws_lb_target_group" "tg" {
     healthy_threshold = 2
     unhealthy_threshold = 2
   }
-}
-
-# === scaling up ===
-
-resource "aws_cloudwatch_metric_alarm" "scale_up" {
-  count = var.enable_autoscaling ? 1 : 0
-
-  alarm_name = "${var.env_name}_scaling_up"
-  alarm_description = "Monitors CPU utilization for main ASG"
-  
-  namespace = "AWS/EC2"
-
-  metric_name = "CPUUtilization"
-  comparison_operator = "GreaterThanOrEqualToThreshold"
-  threshold = 70
-  statistic = "Average"
-  period = "120"
-  evaluation_periods = "2"
-
-  alarm_actions = [aws_autoscaling_policy.scale_up[0].arn]
-
-  dimensions = {
-    AutoScalingGroupName = aws_autoscaling_group.main_asg.name
-  }
-}
-
-resource "aws_autoscaling_policy" "scale_up" {
-  count = var.enable_autoscaling ? 1 : 0
-
-  name = "${var.env_name}_scaling_up"
-  autoscaling_group_name = aws_autoscaling_group.main_asg.name
-  adjustment_type = "ChangeInCapacity"
-  scaling_adjustment = 1
-  cooldown = 120
-}
-
-# === scaling down ===
-
-resource "aws_cloudwatch_metric_alarm" "scale_down" {
-  count = var.enable_autoscaling ? 1 : 0
-
-  alarm_name = "${var.env_name}_scaling_down"
-  alarm_description = "Monitors CPU utilization for main ASG"
-  
-  namespace = "AWS/EC2"
-
-  metric_name = "CPUUtilization"
-  comparison_operator = "LessThanOrEqualToThreshold"
-  threshold = 10
-  statistic = "Average"
-  period = "120"
-  evaluation_periods = "2"
-
-  alarm_actions = [aws_autoscaling_policy.scale_down[0].arn]
-
-  dimensions = {
-    AutoScalingGroupName = aws_autoscaling_group.main_asg.name
-  }
-}
-
-resource "aws_autoscaling_policy" "scale_down" {
-  count = var.enable_autoscaling ? 1 : 0
- 
-  name = "${var.env_name}_scaling_down"
-  autoscaling_group_name = aws_autoscaling_group.main_asg.name
-  adjustment_type = "ChangeInCapacity"
-  scaling_adjustment = -1
-  cooldown = 120
 }
 
 data "terraform_remote_state" "db" {

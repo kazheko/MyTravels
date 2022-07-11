@@ -10,6 +10,8 @@ sudo apt-get install -y dotnet-sdk-6.0
 sudo apt-get install -y nginx
 sudo service nginx start
 
+echo "it's for test purpose only"
+
 echo "server {
  listen 8080;
  location / {
