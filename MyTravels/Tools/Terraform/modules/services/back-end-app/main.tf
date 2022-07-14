@@ -53,38 +53,3 @@ resource "aws_lb_target_group" "tg" {
     unhealthy_threshold = 2
   }
 }
-
-data "terraform_remote_state" "db" {
-  backend = "s3"
-
-  config = {
-    bucket = var.db_remote_state_bucket
-    key    = var.db_remote_state_key
-    region = "us-east-2"
-  }  
-}
-
-data "template_file" "user_data" {
-  template = file("${path.module}/app-deploy.sh")
-
-  vars = {
-    server_port = var.web_port
-    db_address = data.terraform_remote_state.db.outputs.address
-    db_port = data.terraform_remote_state.db.outputs.port
-    db_username = var.db_username
-    db_password = var.db_password
-    db_database = var.db_database
-    env = var.env_name
-  }
-}
-
-data "aws_vpc" "default" {
-  default = true
-}
-
-data "aws_subnets" "default" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.default.id]
-  }
-}
