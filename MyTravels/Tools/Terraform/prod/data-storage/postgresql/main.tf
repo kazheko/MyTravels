@@ -1,12 +1,12 @@
 terraform {
-    backend "s3" {
-      bucket = "web-app-terraform-state"
-      key = "prod/data-storage/postgresql/terraform.tfstate"
-      region = "us-east-2"
-      
-      dynamodb_table = "terraform-locks"
-      encrypt = true
-    }
+  backend "s3" {
+    bucket = "web-app-terraform-state"
+    key    = "prod/data-storage/postgresql/terraform.tfstate"
+    region = "us-east-2"
+
+    dynamodb_table = "terraform-locks"
+    encrypt        = true
+  }
 }
 
 provider "aws" {
