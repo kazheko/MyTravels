@@ -16,9 +16,11 @@ provider "aws" {
 module "back_end" {
   source = "../../../modules/services/back-end-app"
 
-  db_password            = var.db_password
-  db_remote_state_bucket = "web-app-terraform-state"
-  db_remote_state_key    = "stage/data-storage/postgresql/terraform.tfstate"
-  env_name               = "stage"
-  enable_autoscaling     = false
+  db_password = var.db_password
+  db_remote_state = {
+    bucket = "web-app-terraform-state"
+    key    = "stage/data-storage/postgresql/terraform.tfstate"
+  }
+  env_name           = "stage"
+  enable_autoscaling = false
 }
