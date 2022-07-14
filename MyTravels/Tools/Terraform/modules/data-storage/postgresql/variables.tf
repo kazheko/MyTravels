@@ -4,6 +4,12 @@ variable "db_username" {
  default = "postgres"
 }
 
+variable "db_name" {
+ description = "The database name"
+ type = string
+ default = "mytravels"
+}
+
 variable "env_name" {
   description = "The name to use for all the environment resources"
   type = string

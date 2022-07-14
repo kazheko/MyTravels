@@ -17,7 +17,7 @@ resource "aws_db_instance" "db" {
   engine = "postgres"
   allocated_storage = 5
   instance_class = "db.t3.micro"
-  db_name = "mytravels"
+  db_name = var.db_name
   skip_final_snapshot = true
   publicly_accessible  = true
   username = var.db_username
